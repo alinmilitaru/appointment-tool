@@ -13,10 +13,7 @@ $password = '';
 $databasename = 'consultants';
 
 $conn = mysqli_connect($hostname, $username, $password);
-if (!$conn)
-{
+if (!$conn) {
     die('Could not connect to database: ' . mysqli_connect_error());
 }
 mysqli_select_db($conn, $databasename);
-
-?>
