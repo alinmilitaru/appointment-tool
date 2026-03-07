@@ -1,15 +1,15 @@
 <?php
 
-/// mysql hostname
+// mysql hostname
 $hostname = 'localhost';
 
-/// mysql username
+// mysql username
 $username = 'root';
 
-/// mysql password
+// mysql password
 $password = '';
 
-/// mysql database
+// mysql database
 $databasename = 'consultants';
 
 $conn = mysqli_connect($hostname, $username, $password);
