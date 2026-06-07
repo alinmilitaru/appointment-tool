@@ -92,14 +92,14 @@ function loginGuest(): void
     if (empty($phone)) {
         addFieldError('guest_phone', 'Please complete your phone number.');
     } elseif (!validRomanianPhone($phone)) {
-        addFieldError('guest_phone', 'The phone number must start with 07 or +407 and contain only digits after the prefix.');
+        addFieldError('guest_phone', 'The phone number length is incorrect.');
     }
 
     if (!hasErrors()) {
         $_SESSION['user'] = [
             'type' => 'guest',
             'name' => $name,
-            'phone' => $phone,
+            'phone' => '+40' . $phone,
         ];
 
         unset($_SESSION['form']);
@@ -135,7 +135,7 @@ function loginSpecialist(array $specialists): void
 
 function validRomanianPhone(string $phone): bool
 {
-    return (bool) preg_match('/^(07[0-9]{8}|\+407[0-9]{8})$/', $phone);
+    return (bool) preg_match('/^[0-9]{9}$/', $phone);
 }
 
 function addError(string $text): void
@@ -344,6 +344,26 @@ function inputClass(string $field): string
 
         .inputError {
             border-color: var(--error);
+        }
+
+        .phoneBox {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: var(--input);
+            overflow: hidden;
+        }
+
+        .phonePrefix {
+            padding: 10px 12px;
+            border-right: 1px dashed var(--line);
+            color: var(--accent);
+        }
+
+        .phoneBox input {
+            border: 0;
+            border-radius: 0;
         }
 
         button,
@@ -710,10 +730,13 @@ function inputClass(string $field): string
 
                     <label>
                         Phone number
-                        <input type="text" name="guest_phone"
-                            class="<?= e(inputClass('guest_phone')); ?>"
-                            value="<?= e($_SESSION['form']['guest_phone'] ?? ''); ?>"
-                            placeholder="0722123456" required>
+                        <div
+                            class="phoneBox <?= e(inputClass('guest_phone')); ?>">
+                            <span class="phonePrefix">+40</span>
+                            <input type="text" name="guest_phone"
+                                value="<?= e($_SESSION['form']['guest_phone'] ?? ''); ?>"
+                                placeholder="123456789" maxlength="9" inputmode="numeric" required>
+                        </div>
                     </label>
 
                     <button class="submitButton" type="submit"
