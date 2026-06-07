@@ -16,6 +16,38 @@ $specialists = [
     ],
 ];
 
+$translations = [
+    'ro' => [
+        'Appointment Tool' => 'ProgramÄƒri salon',
+        'Switch language' => 'SchimbÄƒ limba',
+        'Switch theme' => 'SchimbÄƒ tema',
+        'Homepage' => 'Pagina principalÄƒ',
+        'Guest' => 'Client',
+        'Specialist' => 'Specialist',
+        'Book a hair or beard service.' => 'ProgrameazÄƒ un serviciu pentru pÄƒr sau barbÄƒ.',
+        'Manage stylist appointments.' => 'GestioneazÄƒ programÄƒrile salonului.',
+        'Guest Login' => 'Autentificare client',
+        'Specialist Login' => 'Autentificare specialist',
+        'Back' => 'ÃŽnapoi',
+        'Name' => 'Nume',
+        'Phone number' => 'Telefon',
+        'Password' => 'ParolÄƒ',
+        'Login' => 'Autentificare',
+        'Logout' => 'IeÈ™ire',
+        'Welcome back,' => 'Bine ai revenit,',
+        'Type:' => 'Tip:',
+        'Name:' => 'Nume:',
+        'Phone:' => 'Telefon:',
+        'Please complete your name.' => 'Te rog completeazÄƒ numele.',
+        'The name must contain only letters, spaces, dot, apostrophe or hyphen.' => 'Numele trebuie sÄƒ conÈ›inÄƒ doar litere, spaÈ›ii, punct, apostrof sau cratimÄƒ.',
+        'Please complete your phone number.' => 'Te rog completeazÄƒ numÄƒrul de telefon.',
+        'The phone number length is incorrect.' => 'NumÄƒrul de telefon are o lungime incorectÄƒ.',
+        'Please choose a valid specialist.' => 'Te rog alege un specialist valid.',
+        'The specialist password is incorrect.' => 'Parola specialistului este incorectÄƒ.',
+        'You are logged in as guest.' => 'EÈ™ti autentificat ca client.',
+        'You are logged in as specialist.' => 'EÈ™ti autentificat ca specialist.',
+    ],
+];
 
 $theme = $_SESSION['theme'] ?? 'light';
 $themeChanging = false;
@@ -28,6 +60,14 @@ if (!in_array($theme, ['light', 'dark'], true)) {
 }
 $_SESSION['theme'] = $theme;
 
+$lang = $_SESSION['lang'] ?? 'en';
+if (isset($_GET['lang']) && in_array($_GET['lang'], ['en', 'ro'], true)) {
+    $lang = $_GET['lang'];
+}
+if (!in_array($lang, ['en', 'ro'], true)) {
+    $lang = 'en';
+}
+$_SESSION['lang'] = $lang;
 
 if (!isset($_SESSION['message'])) {
     $_SESSION['message'] = '';
@@ -52,6 +92,12 @@ if ($mode != '') {
     $themeParams['mode'] = $mode;
 }
 $themeUrl = 'index.php?' . http_build_query($themeParams);
+$nextLang = $lang == 'ro' ? 'en' : 'ro';
+$langParams = ['lang' => $nextLang];
+if ($mode != '') {
+    $langParams['mode'] = $mode;
+}
+$langUrl = 'index.php?' . http_build_query($langParams);
 $screenContentClass = $themeChanging ? '' : 'screenContent';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -84,15 +130,15 @@ function loginGuest(): void
     $_SESSION['form']['guest_phone'] = $phone;
 
     if (empty($name)) {
-        addFieldError('guest_name', 'Please complete your name.');
+        addFieldError('guest_name', __('Please complete your name.'));
     } elseif (!preg_match("/^[a-zA-Z .'-]{2,60}$/", $name)) {
-        addFieldError('guest_name', 'The name must contain only letters, spaces, dot, apostrophe or hyphen.');
+        addFieldError('guest_name', __('The name must contain only letters, spaces, dot, apostrophe or hyphen.'));
     }
 
     if (empty($phone)) {
-        addFieldError('guest_phone', 'Please complete your phone number.');
+        addFieldError('guest_phone', __('Please complete your phone number.'));
     } elseif (!validRomanianPhone($phone)) {
-        addFieldError('guest_phone', 'The phone number length is incorrect.');
+        addFieldError('guest_phone', __('The phone number length is incorrect.'));
     }
 
     if (!hasErrors()) {
@@ -104,7 +150,7 @@ function loginGuest(): void
 
         unset($_SESSION['form']);
         unset($_SESSION['form_errors']);
-        addSuccess('You are logged in as guest.');
+        addSuccess(__('You are logged in as guest.'));
     }
 }
 
@@ -115,9 +161,9 @@ function loginSpecialist(array $specialists): void
     $_SESSION['form']['specialist'] = $specialist;
 
     if (!isset($specialists[$specialist])) {
-        addFieldError('specialist', 'Please choose a valid specialist.');
+        addFieldError('specialist', __('Please choose a valid specialist.'));
     } elseif ($password != $specialists[$specialist]['password']) {
-        addFieldError('password', 'The specialist password is incorrect.');
+        addFieldError('password', __('The specialist password is incorrect.'));
     }
 
     if (!hasErrors()) {
@@ -129,7 +175,7 @@ function loginSpecialist(array $specialists): void
 
         unset($_SESSION['form']);
         unset($_SESSION['form_errors']);
-        addSuccess('You are logged in as specialist.');
+        addSuccess(__('You are logged in as specialist.'));
     }
 }
 
@@ -185,6 +231,12 @@ function e(mixed $text): string
     return htmlspecialchars((string) $text, ENT_QUOTES, 'UTF-8');
 }
 
+function __(string $text): string
+{
+    global $translations, $lang;
+
+    return $translations[$lang][$text] ?? $text;
+}
 
 function selected(string $firstValue, string $secondValue): string
 {
@@ -198,12 +250,12 @@ function inputClass(string $field): string
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?= e($lang); ?>">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Appointment Tool
+    <title><?= e(__('Appointment Tool')); ?>
     </title>
     <style>
         * {
@@ -444,7 +496,9 @@ function inputClass(string $field): string
             opacity: .22;
             transform: translateX(0);
         }
-.themeToggle.dark::before {
+
+        .languageToggle.en::before,
+        .themeToggle.dark::before {
             transform: translateX(32px);
         }
 
@@ -480,6 +534,11 @@ function inputClass(string $field): string
             display: grid;
             place-items: center;
             z-index: 1;
+        }
+
+        .languageToggle span {
+            font-size: .75rem;
+            font-weight: bold;
         }
 
         .choiceGrid {
@@ -666,9 +725,17 @@ function inputClass(string $field): string
 
 <body class="<?= e($theme); ?>Theme">
     <main class="page">
-        <div class="topControls">            <a class="switchToggle themeToggle <?= e($theme); ?><?= $themeChanging ? ' themeChanging' : ''; ?>"
+        <div class="topControls">
+            <a class="switchToggle languageToggle <?= e($lang); ?>"
+                href="<?= e($langUrl); ?>"
+                aria-label="<?= e(__('Switch language')); ?>">
+                <span>RO</span>
+                <span>EN</span>
+            </a>
+
+            <a class="switchToggle themeToggle <?= e($theme); ?><?= $themeChanging ? ' themeChanging' : ''; ?>"
                 href="<?= e($themeUrl); ?>"
-                aria-label="Switch theme">
+                aria-label="<?= e(__('Switch theme')); ?>">
                 <span>&#9728;</span>
                 <span>&#9790;</span>
             </a>
@@ -676,31 +743,31 @@ function inputClass(string $field): string
 
         <?php if (!empty($user) || $mode != ''): ?>
         <a class="smallLogo" href="index.php"
-            aria-label="Homepage">&#128136;</a>
+            aria-label="<?= e(__('Homepage')); ?>">&#128136;</a>
         <?php endif; ?>
 
         <?php if (empty($user) && $mode == ''): ?>
         <section class="mainDiv homeDiv">
             <div class="introTitle">
                 <span>&#128136;</span>
-                <span>Appointment Tool</span>
+                <span><?= e(__('Appointment Tool')); ?></span>
             </div>
 
             <div class="choiceGrid">
                 <a class="choiceBox" href="index.php?mode=guest">
                     <div>
-                        <h2>Guest
+                        <h2><?= e(__('Guest')); ?>
                         </h2>
-                        <p>Book a hair or beard service.
+                        <p><?= e(__('Book a hair or beard service.')); ?>
                         </p>
                     </div>
                 </a>
 
                 <a class="choiceBox" href="index.php?mode=specialist">
                     <div>
-                        <h2>Specialist
+                        <h2><?= e(__('Specialist')); ?>
                         </h2>
-                        <p>Manage stylist appointments.
+                        <p><?= e(__('Manage stylist appointments.')); ?>
                         </p>
                     </div>
                 </a>
@@ -712,16 +779,16 @@ function inputClass(string $field): string
         <section class="mainDiv">
             <div class="<?= e($screenContentClass); ?>">
                 <div class="top">
-                    <h2>Guest Login
+                    <h2><?= e(__('Guest Login')); ?>
                     </h2>
                     <a class="button secondary iconButton" href="index.php"
-                        aria-label="Back">&#8249;</a>
+                        aria-label="<?= e(__('Back')); ?>">&#8249;</a>
                 </div>
                 <?php displayMessages(); ?>
 
                 <form method="post">
                     <label>
-                        Name
+                        <?= e(__('Name')); ?>
                         <input type="text" name="guest_name"
                             class="<?= e(inputClass('guest_name')); ?>"
                             value="<?= e($_SESSION['form']['guest_name'] ?? ''); ?>"
@@ -729,7 +796,7 @@ function inputClass(string $field): string
                     </label>
 
                     <label>
-                        Phone number
+                        <?= e(__('Phone number')); ?>
                         <div
                             class="phoneBox <?= e(inputClass('guest_phone')); ?>">
                             <span class="phonePrefix">+40</span>
@@ -740,7 +807,7 @@ function inputClass(string $field): string
                     </label>
 
                     <button class="submitButton" type="submit"
-                        name="login_guest">Login</button>
+                        name="login_guest"><?= e(__('Login')); ?></button>
                 </form>
             </div>
         </section>
@@ -750,16 +817,16 @@ function inputClass(string $field): string
         <section class="mainDiv">
             <div class="<?= e($screenContentClass); ?>">
                 <div class="top">
-                    <h2>Specialist Login
+                    <h2><?= e(__('Specialist Login')); ?>
                     </h2>
                     <a class="button secondary iconButton" href="index.php"
-                        aria-label="Back">&#8249;</a>
+                        aria-label="<?= e(__('Back')); ?>">&#8249;</a>
                 </div>
                 <?php displayMessages(); ?>
 
                 <form method="post">
                     <label>
-                        Specialist
+                        <?= e(__('Specialist')); ?>
                         <select name="specialist"
                             class="<?= e(inputClass('specialist')); ?>">
                             <?php foreach ($specialists as $id => $specialist): ?>
@@ -771,14 +838,14 @@ function inputClass(string $field): string
                     </label>
 
                     <label>
-                        Password
+                        <?= e(__('Password')); ?>
                         <input type="password" name="password"
                             class="<?= e(inputClass('password')); ?>"
                             placeholder="salon" required>
                     </label>
 
                     <button class="submitButton" type="submit"
-                        name="login_specialist">Login</button>
+                        name="login_specialist"><?= e(__('Login')); ?></button>
                 </form>
             </div>
         </section>
@@ -788,22 +855,22 @@ function inputClass(string $field): string
         <section class="mainDiv loggedBox">
             <div class="<?= e($screenContentClass); ?>">
                 <div class="top">
-                    <h2>Welcome back,
+                    <h2><?= e(__('Welcome back,')); ?>
                         <?= e(ucfirst($user['name'])); ?>.
                     </h2>
                     <a class="button secondary logoutButton right"
-                        href="index.php?logout=1">Logout</a>
+                        href="index.php?logout=1"><?= e(__('Logout')); ?></a>
                 </div>
                 <?php displayMessages(); ?>
                 <p>
-                    Type:
-                    <strong><?= e($user['type'] == 'guest' ? 'Guest' : 'Specialist'); ?></strong><br>
-                    Name:
+                    <?= e(__('Type:')); ?>
+                    <strong><?= e($user['type'] == 'guest' ? __('Guest') : __('Specialist')); ?></strong><br>
+                    <?= e(__('Name:')); ?>
                     <strong><?= e($user['name']); ?></strong>
                 </p>
 
                 <?php if ($user['type'] == 'guest'): ?>
-                <p>Phone:
+                <p><?= e(__('Phone:')); ?>
                     <strong><?= e($user['phone']); ?></strong>
                 </p>
                 <?php endif; ?>
