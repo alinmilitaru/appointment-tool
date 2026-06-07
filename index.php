@@ -16,6 +16,9 @@ $specialists = [
     ],
 ];
 
+
+
+
 if (!isset($_SESSION['message'])) {
     $_SESSION['message'] = '';
 }
@@ -25,24 +28,25 @@ if (!isset($_SESSION['fail'])) {
 }
 
 if (isset($_GET['logout'])) {
-    unset($_SESSION['user']);
-    addSuccess('You are logged out.');
+    unset($_SESSION['user'], $_SESSION['form'], $_SESSION['form_errors']);
+    $_SESSION['message'] = '';
+    $_SESSION['fail'] = '';
     header('Location: index.php');
     exit;
 }
 
 $mode = $_GET['mode'] ?? '';
+$screenContentClass = 'screenContent';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $_SESSION['message'] = '';
     $_SESSION['fail'] = '';
+    $_SESSION['form_errors'] = [];
 
     if (isset($_POST['login_guest'])) {
         $mode = 'guest';
         loginGuest();
-    }
-
-    if (isset($_POST['login_specialist'])) {
+    } elseif (isset($_POST['login_specialist'])) {
         $mode = 'specialist';
         loginSpecialist($specialists);
     }
@@ -64,25 +68,26 @@ function loginGuest(): void
     $_SESSION['form']['guest_phone'] = $phone;
 
     if (empty($name)) {
-        addError('Please complete your name.');
+        addFieldError('guest_name', 'Please complete your name.');
     } elseif (!preg_match("/^[a-zA-Z .'-]{2,60}$/", $name)) {
-        addError('The name must contain only letters, spaces, dot, apostrophe or hyphen.');
+        addFieldError('guest_name', 'The name must contain only letters, spaces, dot, apostrophe or hyphen.');
     }
 
     if (empty($phone)) {
-        addError('Please complete your phone number.');
+        addFieldError('guest_phone', 'Please complete your phone number.');
     } elseif (!validRomanianPhone($phone)) {
-        addError('The phone number must start with 07 or +407 and contain only digits after the prefix.');
+        addFieldError('guest_phone', 'The phone number must start with 07 or +407 and contain only digits after the prefix.');
     }
 
     if (!hasErrors()) {
         $_SESSION['user'] = [
             'type' => 'guest',
-            'name' => cleanText($name),
+            'name' => $name,
             'phone' => $phone,
         ];
 
         unset($_SESSION['form']);
+        unset($_SESSION['form_errors']);
         addSuccess('You are logged in as guest.');
     }
 }
@@ -94,9 +99,9 @@ function loginSpecialist(array $specialists): void
     $_SESSION['form']['specialist'] = $specialist;
 
     if (!isset($specialists[$specialist])) {
-        addError('Please choose a valid specialist.');
+        addFieldError('specialist', 'Please choose a valid specialist.');
     } elseif ($password != $specialists[$specialist]['password']) {
-        addError('The specialist password is incorrect.');
+        addFieldError('password', 'The specialist password is incorrect.');
     }
 
     if (!hasErrors()) {
@@ -107,6 +112,7 @@ function loginSpecialist(array $specialists): void
         ];
 
         unset($_SESSION['form']);
+        unset($_SESSION['form_errors']);
         addSuccess('You are logged in as specialist.');
     }
 }
@@ -122,6 +128,12 @@ function addError(string $text): void
     $_SESSION['message'] .= '<li>' . e($text) . '</li>';
 }
 
+function addFieldError(string $field, string $text): void
+{
+    $_SESSION['form_errors'][$field] = true;
+    addError($text);
+}
+
 function addSuccess(string $text): void
 {
     $_SESSION['fail'] = '';
@@ -135,6 +147,8 @@ function hasErrors(): bool
 
 function displayMessages(): void
 {
+    echo '<div class="messageSpace">';
+
     if (!empty($_SESSION['message'])) {
         $class = hasErrors() ? 'error' : 'success';
 
@@ -145,11 +159,9 @@ function displayMessages(): void
         $_SESSION['message'] = '';
         $_SESSION['fail'] = '';
     }
-}
 
-function cleanText(string $text): string
-{
-    return htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
+    echo '<div class="cutLine"></div>';
+    echo '</div>';
 }
 
 function e(mixed $text): string
@@ -157,28 +169,49 @@ function e(mixed $text): string
     return htmlspecialchars((string) $text, ENT_QUOTES, 'UTF-8');
 }
 
+
 function selected(string $firstValue, string $secondValue): string
 {
     return $firstValue == $secondValue ? 'selected' : '';
+}
+
+function inputClass(string $field): string
+{
+    return !empty($_SESSION['form_errors'][$field]) ? 'inputError' : '';
 }
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Appointment Tool</title>
+    <title>Appointment Tool
+    </title>
     <style>
         * {
             box-sizing: border-box;
         }
 
         body {
+            --page: paleturquoise;
+            --panel: lightcyan;
+            --text: #123431;
+            --accent: darkgreen;
+            --muted: #4f6f6b;
+            --line: rgba(0, 100, 0, 0.3);
+            --card: rgba(255, 255, 255, 0.55);
+            --soft: rgba(218, 224, 224, 0.86);
+            --input: white;
+            --shadow: 3px 4px 6px rgba(0, 139, 139, 0.5), -0.5em 0 .4em rgba(0, 100, 0, 0.35);
+            --button: #4CAF50;
+            --error: #b72d2d;
+
             min-height: 100vh;
             margin: 0;
-            background: paleturquoise;
-            color: #123431;
+            background: var(--page);
+            color: var(--text);
             font-family: Arial, Helvetica, sans-serif;
             display: grid;
             place-items: center;
@@ -190,27 +223,64 @@ function selected(string $firstValue, string $secondValue): string
         }
 
         .mainDiv {
-            background: lightcyan;
-            border: 1px solid darkgreen;
+            background: linear-gradient(135deg, var(--panel), var(--soft));
+            border: 1px solid var(--accent);
             border-radius: 12px;
-            box-shadow: 3px 4px 6px rgba(0, 139, 139, 0.5), -0.5em 0 .4em rgba(0, 100, 0, 0.35);
+            box-shadow: var(--shadow);
             padding: 28px;
         }
 
-        h1,
+        .homeDiv {
+            background: var(--panel);
+            overflow: hidden;
+            position: relative;
+            min-height: 240px;
+            pointer-events: none;
+            animation: enableChoices .01s linear 2s forwards;
+        }
+
+        .screenContent {
+            animation: screenFade .45s ease;
+        }
+
+        .introTitle {
+            position: absolute;
+            inset: 28px;
+            color: var(--accent);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.8rem;
+            font-weight: bold;
+            animation: titleIntro 1.35s ease forwards;
+        }
+
+        .introTitle span:first-child {
+            font-size: 2.1rem;
+        }
+
         h2,
         p {
             margin-top: 0;
         }
 
-        h1,
         h2 {
-            color: darkgreen;
+            color: var(--accent);
             text-align: center;
         }
 
+        .smallLogo {
+            display: block;
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 14px;
+            text-decoration: none;
+            animation: slowBlink 2.8s ease-in-out infinite;
+        }
+
         a {
-            color: darkgreen;
+            color: var(--accent);
         }
 
         form {
@@ -221,7 +291,7 @@ function selected(string $firstValue, string $secondValue): string
         label {
             display: grid;
             gap: 6px;
-            color: #4f6f6b;
+            color: var(--muted);
             font-weight: bold;
         }
 
@@ -229,10 +299,20 @@ function selected(string $firstValue, string $secondValue): string
         select {
             width: 100%;
             padding: 10px 12px;
-            border: 1px solid rgba(0, 100, 0, 0.3);
+            border: 1px solid var(--line);
             border-radius: 8px;
-            background: white;
+            background: var(--input);
+            color: var(--text);
             font: inherit;
+        }
+
+        input:invalid,
+        select:invalid {
+            box-shadow: none;
+        }
+
+        .inputError {
+            border-color: var(--error);
         }
 
         button,
@@ -241,10 +321,10 @@ function selected(string $firstValue, string $secondValue): string
             justify-content: center;
             align-items: center;
             min-height: 42px;
-            border: 1px solid darkgreen;
+            border: 1px solid var(--accent);
             border-radius: 999px;
             padding: 10px 18px;
-            background: #4CAF50;
+            background: var(--button);
             color: white;
             font-weight: bold;
             text-decoration: none;
@@ -253,8 +333,33 @@ function selected(string $firstValue, string $secondValue): string
         }
 
         .button.secondary {
-            background: white;
-            color: darkgreen;
+            background: var(--input);
+            color: var(--accent);
+        }
+
+        .submitButton {
+            justify-self: center;
+            min-height: 36px;
+            padding: 8px 28px;
+        }
+
+        .iconButton {
+            width: 32px;
+            height: 32px;
+            min-height: 32px;
+            padding: 0;
+            border-radius: 50%;
+            font-size: 1.6rem;
+            line-height: 1;
+            padding-bottom: 2px;
+        }
+
+        .logoutButton {
+            width: auto;
+            height: 34px;
+            min-height: 34px;
+            padding: 0 12px;
+            font-size: .9rem;
         }
 
         .choiceGrid {
@@ -265,29 +370,103 @@ function selected(string $firstValue, string $secondValue): string
 
         .choiceBox {
             min-height: 180px;
-            border: 1px solid rgba(0, 100, 0, 0.3);
+            border: 1px solid var(--line);
             border-radius: 12px;
-            background: rgba(255, 255, 255, 0.55);
+            background: var(--card);
             color: inherit;
             display: grid;
             place-items: center;
             padding: 24px;
             text-align: center;
             text-decoration: none;
+            opacity: 0;
+            animation: splitLeft .8s cubic-bezier(.2, .9, .2, 1.1) 1.2s forwards;
+            transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+        }
+
+        .choiceBox:nth-child(2) {
+            animation-name: splitRight;
         }
 
         .choiceBox:hover {
-            border-color: darkgreen;
+            border-color: var(--accent);
             box-shadow: 0 3px 10px rgba(0, 100, 0, 0.18);
+            transform: translateY(-4px);
+        }
+
+        @keyframes titleIntro {
+            0% {
+                opacity: 0;
+                transform: translateY(10px) scale(.96);
+            }
+
+            45% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translateY(-12px) scale(.96);
+            }
+        }
+
+        @keyframes splitLeft {
+            from {
+                opacity: 0;
+                transform: translateX(55%) scale(.94);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0) scale(1);
+            }
+        }
+
+        @keyframes splitRight {
+            from {
+                opacity: 0;
+                transform: translateX(-55%) scale(.94);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0) scale(1);
+            }
+        }
+
+        @keyframes enableChoices {
+            to {
+                pointer-events: auto;
+            }
+        }
+
+        @keyframes screenFade {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slowBlink {
+            50% {
+                opacity: 0;
+            }
         }
 
         .message {
             border-radius: 10px;
             padding: 12px 14px;
             margin-bottom: 12px;
-            background: rgba(255, 255, 255, 0.7);
-            border: 1px solid rgba(0, 100, 0, 0.25);
+            background: var(--card);
+            border: 1px solid var(--line);
             font-weight: bold;
+            text-align: left;
         }
 
         .message ul {
@@ -295,24 +474,54 @@ function selected(string $firstValue, string $secondValue): string
             padding-left: 20px;
         }
 
-        .message li + li {
+        .message li+li {
             margin-top: 4px;
         }
 
         .message.error {
-            color: #b72d2d;
+            color: var(--error);
         }
 
         .message.success {
-            color: darkgreen;
+            color: var(--accent);
+        }
+
+        .messageSpace {
+            min-height: 34px;
+            margin: 8px 0 16px;
+        }
+
+        .cutLine {
+            height: 1px;
+            margin-top: 12px;
+            background: repeating-linear-gradient(to right,
+                    var(--line) 0 21px,
+                    transparent 21px 32px);
         }
 
         .top {
-            display: flex;
-            justify-content: space-between;
-            gap: 18px;
+            display: grid;
+            grid-template-columns: 78px 1fr 78px;
             align-items: center;
             margin-bottom: 18px;
+        }
+
+        .top h2 {
+            grid-column: 2;
+            grid-row: 1;
+            margin-bottom: 0;
+        }
+
+        .top .iconButton {
+            grid-column: 1;
+            grid-row: 1;
+            justify-self: start;
+        }
+
+        .top .right {
+            grid-column: 3;
+            grid-row: 1;
+            justify-self: end;
         }
 
         .loggedBox {
@@ -328,106 +537,148 @@ function selected(string $firstValue, string $secondValue): string
                 margin: 0 auto;
             }
 
-            .choiceGrid,
-            .top {
+            .choiceGrid {
                 grid-template-columns: 1fr;
-                display: grid;
             }
         }
     </style>
 </head>
+
 <body>
-    <main class="page">
-        <h1>Appointment Tool</h1>
-        <?php displayMessages(); ?>
+    <main class="page">        <?php if (!empty($user) || $mode != ''): ?>
+        <a class="smallLogo" href="index.php"
+            aria-label="Homepage">&#128136;</a>
+        <?php endif; ?>
 
         <?php if (empty($user) && $mode == ''): ?>
-            <section class="mainDiv">
-                <div class="choiceGrid">
-                    <a class="choiceBox" href="index.php?mode=guest">
-                        <div>
-                            <h2>Guest</h2>
-                            <p>Login without password.</p>
-                        </div>
-                    </a>
+        <section class="mainDiv homeDiv">
+            <div class="introTitle">
+                <span>&#128136;</span>
+                <span>Appointment Tool</span>
+            </div>
 
-                    <a class="choiceBox" href="index.php?mode=specialist">
-                        <div>
-                            <h2>Specialist</h2>
-                            <p>Login with specialist password.</p>
-                        </div>
-                    </a>
-                </div>
-            </section>
+            <div class="choiceGrid">
+                <a class="choiceBox" href="index.php?mode=guest">
+                    <div>
+                        <h2>Guest
+                        </h2>
+                        <p>Book a hair or beard service.
+                        </p>
+                    </div>
+                </a>
+
+                <a class="choiceBox" href="index.php?mode=specialist">
+                    <div>
+                        <h2>Specialist
+                        </h2>
+                        <p>Manage stylist appointments.
+                        </p>
+                    </div>
+                </a>
+            </div>
+        </section>
         <?php endif; ?>
 
         <?php if (empty($user) && $mode == 'guest'): ?>
-            <section class="mainDiv">
+        <section class="mainDiv">
+            <div class="<?= e($screenContentClass); ?>">
                 <div class="top">
-                    <h2>Guest Login</h2>
-                    <a href="index.php">Back</a>
+                    <h2>Guest Login
+                    </h2>
+                    <a class="button secondary iconButton" href="index.php"
+                        aria-label="Back">&#8249;</a>
                 </div>
+                <?php displayMessages(); ?>
 
                 <form method="post">
                     <label>
                         Name
-                        <input type="text" name="guest_name" value="<?= e($_SESSION['form']['guest_name'] ?? ''); ?>" required>
+                        <input type="text" name="guest_name"
+                            class="<?= e(inputClass('guest_name')); ?>"
+                            value="<?= e($_SESSION['form']['guest_name'] ?? ''); ?>"
+                            required>
                     </label>
 
                     <label>
-                        Romanian phone number
-                        <input type="text" name="guest_phone" value="<?= e($_SESSION['form']['guest_phone'] ?? ''); ?>" placeholder="0722123456" required>
+                        Phone number
+                        <input type="text" name="guest_phone"
+                            class="<?= e(inputClass('guest_phone')); ?>"
+                            value="<?= e($_SESSION['form']['guest_phone'] ?? ''); ?>"
+                            placeholder="0722123456" required>
                     </label>
 
-                    <button type="submit" name="login_guest">Login as guest</button>
+                    <button class="submitButton" type="submit"
+                        name="login_guest">Login</button>
                 </form>
-            </section>
+            </div>
+        </section>
         <?php endif; ?>
 
         <?php if (empty($user) && $mode == 'specialist'): ?>
-            <section class="mainDiv">
+        <section class="mainDiv">
+            <div class="<?= e($screenContentClass); ?>">
                 <div class="top">
-                    <h2>Specialist Login</h2>
-                    <a href="index.php">Back</a>
+                    <h2>Specialist Login
+                    </h2>
+                    <a class="button secondary iconButton" href="index.php"
+                        aria-label="Back">&#8249;</a>
                 </div>
+                <?php displayMessages(); ?>
 
                 <form method="post">
                     <label>
                         Specialist
-                        <select name="specialist">
+                        <select name="specialist"
+                            class="<?= e(inputClass('specialist')); ?>">
                             <?php foreach ($specialists as $id => $specialist): ?>
-                                <option value="<?= e($id); ?>" <?= selected($_SESSION['form']['specialist'] ?? '', $id); ?>>
-                                    <?= e($specialist['name']); ?>
-                                </option>
+                            <option value="<?= e($id); ?>" <?= selected($_SESSION['form']['specialist'] ?? '', $id); ?>>
+                                <?= e($specialist['name']); ?>
+                            </option>
                             <?php endforeach; ?>
                         </select>
                     </label>
 
                     <label>
                         Password
-                        <input type="password" name="password" placeholder="salon" required>
+                        <input type="password" name="password"
+                            class="<?= e(inputClass('password')); ?>"
+                            placeholder="salon" required>
                     </label>
 
-                    <button type="submit" name="login_specialist">Login as specialist</button>
+                    <button class="submitButton" type="submit"
+                        name="login_specialist">Login</button>
                 </form>
-            </section>
+            </div>
+        </section>
         <?php endif; ?>
 
         <?php if (!empty($user)): ?>
-            <section class="mainDiv loggedBox">
-                <h2>You are logged in</h2>
+        <section class="mainDiv loggedBox">
+            <div class="<?= e($screenContentClass); ?>">
+                <div class="top">
+                    <h2>Welcome back,
+                        <?= e(ucfirst($user['name'])); ?>.
+                    </h2>
+                    <a class="button secondary logoutButton right"
+                        href="index.php?logout=1">Logout</a>
+                </div>
+                <?php displayMessages(); ?>
                 <p>
-                    Type: <strong><?= e($user['type']); ?></strong><br>
-                    Name: <strong><?= e($user['name']); ?></strong>
+                    Type:
+                    <strong><?= e($user['type'] == 'guest' ? 'Guest' : 'Specialist'); ?></strong><br>
+                    Name:
+                    <strong><?= e($user['name']); ?></strong>
                 </p>
 
                 <?php if ($user['type'] == 'guest'): ?>
-                    <p>Phone: <strong><?= e($user['phone']); ?></strong></p>
+                <p>Phone:
+                    <strong><?= e($user['phone']); ?></strong>
+                </p>
                 <?php endif; ?>
-
-                <a class="button secondary" href="index.php?logout=1">Log out</a>
-            </section>
+            </div>
+        </section>
         <?php endif; ?>
     </main>
 </body>
+
 </html>
