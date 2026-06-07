@@ -17,6 +17,16 @@ $specialists = [
 ];
 
 
+$theme = $_SESSION['theme'] ?? 'light';
+$themeChanging = false;
+if (isset($_GET['theme']) && in_array($_GET['theme'], ['light', 'dark'], true)) {
+    $theme = $_GET['theme'];
+    $themeChanging = true;
+}
+if (!in_array($theme, ['light', 'dark'], true)) {
+    $theme = 'light';
+}
+$_SESSION['theme'] = $theme;
 
 
 if (!isset($_SESSION['message'])) {
@@ -36,7 +46,13 @@ if (isset($_GET['logout'])) {
 }
 
 $mode = $_GET['mode'] ?? '';
-$screenContentClass = 'screenContent';
+$nextTheme = $theme == 'dark' ? 'light' : 'dark';
+$themeParams = ['theme' => $nextTheme];
+if ($mode != '') {
+    $themeParams['mode'] = $mode;
+}
+$themeUrl = 'index.php?' . http_build_query($themeParams);
+$screenContentClass = $themeChanging ? '' : 'screenContent';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $_SESSION['message'] = '';
@@ -217,6 +233,21 @@ function inputClass(string $field): string
             place-items: center;
         }
 
+        body.darkTheme {
+            --page: #101918;
+            --panel: #172321;
+            --text: #dff7ef;
+            --accent: #8fe0a6;
+            --muted: #a8c8c0;
+            --line: rgba(143, 224, 166, 0.35);
+            --card: rgba(255, 255, 255, 0.06);
+            --soft: rgba(94, 102, 100, 0.35);
+            --input: #0f1716;
+            --shadow: 0 12px 28px rgba(0, 0, 0, 0.35), -0.45em 0 .35em rgba(143, 224, 166, 0.12);
+            --button: #2f9f52;
+            --error: #ff8e8e;
+        }
+
         .page {
             width: min(760px, calc(100% - 32px));
             padding: 28px 0;
@@ -360,6 +391,75 @@ function inputClass(string $field): string
             min-height: 34px;
             padding: 0 12px;
             font-size: .9rem;
+        }
+
+        .topControls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .switchToggle {
+            width: 66px;
+            height: 34px;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            background: linear-gradient(135deg, var(--card), var(--soft));
+            color: var(--accent);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            position: relative;
+            text-decoration: none;
+        }
+
+        .switchToggle::before {
+            content: '';
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--accent);
+            opacity: .22;
+            transform: translateX(0);
+        }
+.themeToggle.dark::before {
+            transform: translateX(32px);
+        }
+
+        .themeToggle.themeChanging::before {
+            animation: knobToLight .35s ease both;
+        }
+
+        .themeToggle.dark.themeChanging::before {
+            animation-name: knobToDark;
+        }
+
+        @keyframes knobToLight {
+            from {
+                transform: translateX(32px);
+            }
+
+            to {
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes knobToDark {
+            from {
+                transform: translateX(0);
+            }
+
+            to {
+                transform: translateX(32px);
+            }
+        }
+
+        .switchToggle span {
+            display: grid;
+            place-items: center;
+            z-index: 1;
         }
 
         .choiceGrid {
@@ -544,8 +644,17 @@ function inputClass(string $field): string
     </style>
 </head>
 
-<body>
-    <main class="page">        <?php if (!empty($user) || $mode != ''): ?>
+<body class="<?= e($theme); ?>Theme">
+    <main class="page">
+        <div class="topControls">            <a class="switchToggle themeToggle <?= e($theme); ?><?= $themeChanging ? ' themeChanging' : ''; ?>"
+                href="<?= e($themeUrl); ?>"
+                aria-label="Switch theme">
+                <span>&#9728;</span>
+                <span>&#9790;</span>
+            </a>
+        </div>
+
+        <?php if (!empty($user) || $mode != ''): ?>
         <a class="smallLogo" href="index.php"
             aria-label="Homepage">&#128136;</a>
         <?php endif; ?>
