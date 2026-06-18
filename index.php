@@ -54,7 +54,7 @@ $theme = $_SESSION['theme'] ?? 'light';
 $themeChanging = false;
 if (isset($_GET['theme']) && in_array($_GET['theme'], ['light', 'dark'], true)) {
     $theme = $_GET['theme'];
-    $themeChanging = true;
+    $themeChanging = $_SERVER['REQUEST_METHOD'] == 'GET';
 }
 if (!in_array($theme, ['light', 'dark'], true)) {
     $theme = 'light';
