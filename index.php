@@ -419,6 +419,10 @@ function inputClass(string $field): string
             border-radius: 0;
         }
 
+        .phoneBox input:focus {
+            outline: none;
+        }
+
         button,
         .button {
             display: inline-flex;
