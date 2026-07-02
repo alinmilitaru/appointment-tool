@@ -19,7 +19,7 @@ It turns a small procedural PHP idea into a complete booking flow: specialist sc
 
 The application lets a guest book a service with an available specialist, while specialists can manage bookings and block personal breaks during the day.
 
-Everything lives in `index.php`: data arrays, validation, session state, booking rules, translations, theme handling, and the interface. The goal is not to hide complexity behind tools, but to make the logic visible and easy to follow.
+The entire app is contained in `index.php`, including data arrays, validation, session state, booking rules, translations, theme handling, and a responsive interface. The goal is not to hide complexity behind tools, but to make the logic visible and easy to follow.
 
 ## Features
 
