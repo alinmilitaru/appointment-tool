@@ -108,7 +108,7 @@ It is not trying to compete with a full production booking platform. It is meant
 
 - Bookings and breaks are stored in the PHP session.
 - Refreshing the browser session or clearing cookies resets the demo data.
-- This is a portfolio and learning project, not a production booking system.
+- This is a learning project, not a production booking system.
 - The visible specialist password is intentional for demo purposes.
 
 ## Status
@@ -121,6 +121,6 @@ If this project helps you rethink what a small PHP app can become, a star or a t
 
 ## Rights
 
-This repository is public for portfolio and learning purposes only.
+Usage rights are defined in the [LICENSE](LICENSE) file. In short, this repository is public for educational purposes only.
 
-No permission is granted to copy, modify, distribute, or use this code in other projects. All rights reserved.
+No permission is granted to publish, distribute, deploy, or use this code or derived work in commercial or production environments. All rights reserved.
