@@ -1,6 +1,6 @@
 # Appointment Tool
 
-![PHP](https://img.shields.io/badge/PHP-8.2%2B-777BB4?logo=php&logoColor=white)
+[![PHP](https://img.shields.io/badge/PHP-8.2%2B-777BB4?logo=php&logoColor=white)](https://www.php.net/releases/8.2/en.php)
 ![Style](https://img.shields.io/badge/style-procedural%20PHP-2ea44f)
 ![Storage](https://img.shields.io/badge/storage-session%20arrays-blue)
 ![Database](https://img.shields.io/badge/database-none-lightgrey)
