@@ -1,11 +1,11 @@
 # Appointment Tool
 
 [![PHP](https://img.shields.io/badge/PHP-8.2%2B-777BB4?logo=php&logoColor=white)](https://www.php.net/releases/8.2/en.php)
-![Style](https://img.shields.io/badge/style-procedural%20PHP-2ea44f)
-![Storage](https://img.shields.io/badge/storage-session%20arrays-blue)
-![Database](https://img.shields.io/badge/database-none-lightgrey)
-![Interface](https://img.shields.io/badge/interface-bilingual-success)
-![License](https://img.shields.io/badge/license-all%20rights%20reserved-lightgrey)
+[![Style](https://img.shields.io/badge/style-procedural%20PHP-2ea44f)](#)
+[![Storage](https://img.shields.io/badge/storage-session%20arrays-blue)](#)
+[![Database](https://img.shields.io/badge/database-none-lightgrey)](#)
+[![Interface](https://img.shields.io/badge/interface-bilingual-success)](#)
+[![License](https://img.shields.io/badge/license-all%20rights%20reserved-lightgrey)](#)
 
 Appointment Tool is a single-file PHP booking application for a barber / hair stylist workflow.
 
